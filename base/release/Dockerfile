@@ -3,6 +3,10 @@ FROM alpine:latest
 MAINTAINER Artem Klevtsov a.a.klevtsov@gmail.com
 
 ARG R_VERSION
+ARG VCS_REF
+
+LABEL org.label-schema.vcs-ref=$VCS_REF \
+      org.label-schema.vcs-url="https://github.com/cboettig/r-alpine/tree/master/base/release"
 
 ENV R_VERSION ${R_VERSION:-3.3.1}
 
