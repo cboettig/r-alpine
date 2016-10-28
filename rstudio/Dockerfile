@@ -10,7 +10,7 @@ RUN apk --no-cache add \
     sudo \
     && update-ca-certificates
 
-## RStudio build deps
+## Install RStudio build deps & compile RStudio from source
 RUN apk --no-cache add \
   apache-ant \
   boost-dev \
@@ -27,22 +27,23 @@ RUN apk --no-cache add \
   zlib-dev \
   && wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub \
   && wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.23-r3/glibc-2.23-r3.apk \
-  && apk add glibc-2.23-r3.apk
-
-
-RUN ln -s /usr/lib/R/lib/libRblas.so /usr/lib/R/lib/libR.so \
+  && apk add glibc-2.23-r3.apk \
+  && ln -s /usr/lib/R/lib/libRblas.so /usr/lib/R/lib/libR.so \
   && wget -O rstudio.tar.gz https://github.com/rstudio/rstudio/archive/v0.99.903.tar.gz \
-  && tar -xvf rstudio.tar.gz
+  && tar -xvf rstudio.tar.gz \
   && cd /rstudio-0.99.903/dependencies/common \ 
   && ./install-gwt \
   && ./install-dictionaries \
   && ./install-mathjax \
-#  && ./install-boost \
   && ./install-pandoc \
   && ./install-libclang \
   && ./install-packages \
-#  && ./install-common
   && mkdir /rstudio-0.99.903/build \
   && cd /rstudio-0.99.903/build \
-  && cmake .. -DRSTUDIO_TARGET=Server -DCMAKE_BUILD_TYPE=Release \
-  && make install
+  && cmake .. -DRSTUDIO_TARGET=Server -DCMAKE_BUILD_TYPE=Release 
+
+## Runs into problems regarding glibc headers
+RUN cd /rstudio-0.99.903/build \
+  && make install || true
+RUN adduser -S rstudio-server
+ 
