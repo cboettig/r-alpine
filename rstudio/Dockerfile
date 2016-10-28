@@ -1,4 +1,6 @@
-FROM artemklevtsov/r-alpine:devel
+FROM cboettig/r-alpine:latest
+
+## Combine into a single layer later
 
 ## Add RStudio binaries to PATH
 ENV PATH /usr/lib/rstudio-server/bin/:$PATH
@@ -11,7 +13,7 @@ RUN apk --no-cache add \
     && update-ca-certificates
 
 ## Install RStudio build deps & compile RStudio from source
-RUN apk --no-cache add \
+RUN apk --no-cache add --virtual build-deps \
   apache-ant \
   boost-dev \
   cmake \
@@ -28,6 +30,7 @@ RUN apk --no-cache add \
   && wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub \
   && wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.23-r3/glibc-2.23-r3.apk \
   && apk add glibc-2.23-r3.apk \
+  && apk add libexecinfo-dev --update-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/main --allow-untrusted \
   && ln -s /usr/lib/R/lib/libRblas.so /usr/lib/R/lib/libR.so \
   && wget -O rstudio.tar.gz https://github.com/rstudio/rstudio/archive/v0.99.903.tar.gz \
   && tar -xvf rstudio.tar.gz \
@@ -42,8 +45,49 @@ RUN apk --no-cache add \
   && cd /rstudio-0.99.903/build \
   && cmake .. -DRSTUDIO_TARGET=Server -DCMAKE_BUILD_TYPE=Release 
 
-## Runs into problems regarding glibc headers
+## Runs into problems....
 RUN cd /rstudio-0.99.903/build \
-  && make install || true
+  && make install
+
+
+# Clean up from source install
+RUN apk del --purge build-dep \
+  && rm /glibc-*.apk rstudio-*.tar.gz 
+
+
+
+############ Additional setup #########
+
+
+## Set up RStudio server, s6 init system, etc
 RUN adduser -S rstudio-server
- 
+
+## Link stand-alone pandoc & templates
+RUN ln -s /usr/lib/rstudio-server/bin/pandoc/pandoc /usr/local/bin \
+  && ln -s /usr/lib/rstudio-server/bin/pandoc/pandoc-citeproc /usr/local/bin \
+  && wget https://github.com/jgm/pandoc-templates/archive/1.15.0.6.tar.gz \
+  && mkdir -p /opt/pandoc/templates && tar zxf 1.15.0.6.tar.gz \
+  && cp -r pandoc-templates*/* /opt/pandoc/templates && rm -rf pandoc-templates* \
+  && mkdir /root/.pandoc && ln -s /opt/pandoc/templates /root/.pandoc/templates
+
+## Ensure that if both httr and httpuv are installed downstream, oauth 2.0 flows still work correctly.
+RUN echo '\n\
+\n# Configure httr to perform out-of-band authentication if HTTR_LOCALHOST \
+\n# is not set since a redirect to localhost may not work depending upon \
+\n# where this Docker container is running. \
+\nif(is.na(Sys.getenv("HTTR_LOCALHOST", unset=NA))) { \
+\n  options(httr_oob_default = TRUE) \
+\n}' >> /etc/R/Rprofile.site
+RUN echo "PATH=\"/usr/lib/rstudio-server/bin/:\${PATH}\"" >> /etc/R/Renviron.site
+
+## A default user system configuration. 
+RUN adduser -S rstudio \
+  && echo "rstudio:rstudio" | chpasswd
+
+## Use s6
+RUN wget -P /tmp/ https://github.com/just-containers/s6-overlay/releases/download/v1.11.0.1/s6-overlay-amd64.tar.gz \
+  && tar xzf /tmp/s6-overlay-amd64.tar.gz -C /
+COPY run.sh /etc/services.d/rstudio/run
+
+EXPOSE 8787
+CMD ["/init"]
