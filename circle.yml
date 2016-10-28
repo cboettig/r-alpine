@@ -1,0 +1,10 @@
+general:
+
+machine:
+  services:
+    - docker
+
+test:
+  override:
+    - docker build -t r-alpine/rstudio rstudio
+
