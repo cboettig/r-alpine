@@ -30,7 +30,7 @@ RUN apk --no-cache add \
 #  && wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.23-r3/glibc-2.23-r3.apk \
 #  && apk add glibc-2.23-r3.apk \
    && apk add libexecinfo-dev --update-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/main --allow-untrusted \
-  && apk add boost-dev --update-cache --repository http://dl-cdn.alpinelinux.org/alpine/3.3/main --allow-untrusted \
+#  && apk add 'boost-dev<1.59' --update-cache --repository http://dl-cdn.alpinelinux.org/alpine/v3.1/main --allow-untrusted \
   && ln -s /usr/lib/R/lib/libRblas.so /usr/lib/R/lib/libR.so \
   && wget -O rstudio.tar.gz https://github.com/rstudio/rstudio/archive/v0.99.903.tar.gz \
   && tar -xvf rstudio.tar.gz \
@@ -41,6 +41,7 @@ RUN apk --no-cache add \
   && ./install-pandoc \
   && ./install-libclang \
   && ./install-packages \
+  && ./install-boost || true \
   && mkdir /rstudio-0.99.903/build \
   && cd /rstudio-0.99.903/build \
   && cmake .. -DRSTUDIO_TARGET=Server -DCMAKE_BUILD_TYPE=Release 
