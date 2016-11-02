@@ -14,7 +14,7 @@ RUN apk --no-cache add \
 ## Install RStudio build deps & compile RStudio from source
   && apk --no-cache add --virtual build-deps \
     apache-ant \
-    boost-dev \
+#    boost-dev \
     cmake \
     fakeroot \
     libuuid \
@@ -26,10 +26,11 @@ RUN apk --no-cache add \
     unzip \
     util-linux-dev \
     zlib-dev \
-  && wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub \
-  && wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.23-r3/glibc-2.23-r3.apk \
-  && apk add glibc-2.23-r3.apk \
-  && apk add libexecinfo-dev --update-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/main --allow-untrusted \
+#  && wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub \
+#  && wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.23-r3/glibc-2.23-r3.apk \
+#  && apk add glibc-2.23-r3.apk \
+   && apk add libexecinfo-dev --update-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/main --allow-untrusted \
+  && apk add boost-dev --update-cache --repository http://dl-cdn.alpinelinux.org/alpine/3.3/main --allow-untrusted \
   && ln -s /usr/lib/R/lib/libRblas.so /usr/lib/R/lib/libR.so \
   && wget -O rstudio.tar.gz https://github.com/rstudio/rstudio/archive/v0.99.903.tar.gz \
   && tar -xvf rstudio.tar.gz \
