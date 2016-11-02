@@ -20,9 +20,11 @@ RUN apk --no-cache add \
     libuuid \
     libbz2 \
     libxslt-dev \
+    linux-headers \
     linux-pam-dev \
     openjdk8 \
     pango-dev \ 
+    python-dev \
     unzip \
     util-linux-dev \
     zlib-dev \
